@@ -1,0 +1,171 @@
+#Flappy Santa
+
+#Importing Packages
+import pygame, sys, random
+from pygame.math import Vector2
+from pygame.locals import *
+from pygame import mixer
+pygame.font.init()
+
+#Initializing Game
+pygame.init()
+
+#Creates Screen & Tracks Time
+mainClock = pygame.time.Clock()
+screen = pygame.display.set_mode((500,  500), 0, 32)
+
+#Background Music and Collision Music
+clock = pygame.time.Clock()
+back_sound=pygame.mixer.music.load('We Wish You a Merry Christmas - Instrumental Christmas Music Trumpet & Orchestra.mp3') # main background music
+pygame.mixer.music.play(-1) # plays sound infinitely 
+pygame.mixer.music.set_volume(0.1) #setting volume of main background music
+hit_sound=pygame.mixer.Sound('HO HO HO Merry Christmas - Sound Effect.mp3') #sound to indicate a collision
+
+#Title
+pygame.display.set_caption('Flappy Santa')
+
+# Main Game Function
+def flappy_santa():
+    screen = pygame.display.set_mode((993, 605)) # these are the background's dimensions
+    background = pygame.image.load('christmas.jpg') # loading the image for the background
+
+    #Santas Values
+    santa = pygame.image.load('santa.png') # loading the image for santa
+    # pixel location of santa
+    santaX = 150
+    santaY = 120
+    santa_rect = santa.get_rect(center = (santaX, santaY))
+
+    #Vertical Motion Values
+    gravity = 0
+    santa_movement = 0
+
+    #Bar Values
+    width = 60
+    height1 = random.randint(50, 375) #range of heights for the bars so it isn't too high/low for santa to reach
+    height2 = random.randint(50, 375)
+    color = (255, 255, 255)
+    X_motion = -2.5
+    barX1 = 993
+    barX2 = 1700
+
+    def display_bars(height, barX):
+        pygame.draw.rect(screen, color, (barX, 0, width, height))
+        bottom_height = 605 - height - 200 # top bar, 605=total height, 200=gap
+        pygame.draw.rect(screen, color, (barX, 605, width, -bottom_height))
+
+    def collision(barX, height, bottom_height):
+        if barX >= 85 and barX <= (99): #checks overlap
+            if santa_rect.centery <= height or santa_rect.centery >= (bottom_height - 76):
+                return True
+            return False
+
+    score = 0
+    font = pygame.font.Font('freesansbold.ttf', 32)
+
+    def display_score(score):
+        show = font.render('Score: ' + str(score), True, (0, 255, 0))
+        screen.blit(show, (10, 10))
+        title = font.render('Flappy Santa', True, (0, 255, 0))
+        screen.blit(title, (375, 10))
+
+    def start_screen(score):
+        top_score = scores
+        top_score.append(score)
+        start = font.render('Press Space To Start', True, (0, 255, 0))
+        highscore = font.render('Your High Score is ' + str(max(top_score)), True, (0,255, 0))
+        screen.blit(start, (350, 200))
+        screen.blit(highscore, (385, 500))
+
+    scores = []
+    running = True
+    while running:
+        screen.fill((0, 0, 0))  #indicates a black starting background
+        screen.blit(background, (0, 0))  #displays image on top of the black background
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                
+            # pressing escape will bring you back to the main menu
+            if event.type == pygame.KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+
+                if event.key == pygame.K_SPACE:
+                    # if you press spacebar Santa will move up
+                    gravity = 0.25
+                    santa_movement = 0
+                    santa_movement -= 5
+                    
+        santa_movement += gravity #updating Santa's speed
+        santa_rect.centery += santa_movement 
+        screen.blit(santa, santa_rect)
+                
+        # Santa's Movement Features
+        if santa_rect.centery >= 605 or santa_rect.centery <= 0: #if santa's location is above/below the borders
+            gravity = 0
+            santa_movement = 0
+            santaX = 150
+            santaY = 120
+            santa_rect = santa.get_rect(center=(santaX, santaY))
+            hit_sound.play(0)
+
+        # Start Screen
+        if gravity == 0: #checking if gravity is zero, which means that there has been a collision/fall off screen
+            start_screen(score) #brings santa back to start and prints score on start screen
+            barX1 = 933 #resetting bar positions
+            barX2 = 1500
+            height1 = random.randint(50, 375) #resetting bar heights
+            height2 = random.randint(50, 375)
+            score = 0 #score=0 since back at beginning
+
+     # Incrementation 
+        # Bar Movement
+        if gravity > 0: #updating the motion of bars every time santa moves through them (g=/0)
+            barX1 += X_motion
+            barX2 += X_motion
+            
+         # if santa gets past an obstacle, each obstacle passed is added to the score
+        if barX1 <= -300: #-300 indicates that the bar continues to move beyond the screen instead of disappearing right at x=0, this creates a smoother transition
+            barX1 = 933
+            height1 = random.randint(50, 375)
+            
+            score += 1 #updating the score when santa passes through bars
+            if score % 3 == 0:
+                X_motion += -.20 #increasing speed of the bars
+                
+        if barX2 <= -300: #duplicated for bar 2
+            barX2 = 933
+            height2 = random.randint(50, 375)
+            
+            score += 1
+            if score % 3 == 0:
+                X_motion += -.20
+                
+        if gravity > 0: #bar display while in standard play 
+            display_bars(height1, barX1)
+            display_bars(height2, barX2)
+            
+        # calling collision fucntions
+        collisions1 = collision(barX1, height1, height1 + 200)
+        collisions2 = collision(barX2, height2, height2 + 200)
+        
+        #checking for collisions, if true, play collision sound and game restarts
+        if collisions1 or collisions2:
+                hit_sound.play(0)
+                gravity = 0
+                santa_movement = 0
+                santaX = 150
+                santaY = 120
+                santa_rect = santa.get_rect(center=(santaX, santaY))
+                #print('collision') # to check that the collisions are working and being read
+                
+        # Calling Our Functions
+        display_score(score)
+        pygame.display.update()
+        mainClock.tick(120)
+        
+        
+flappy_santa()
+pygame.quit()
