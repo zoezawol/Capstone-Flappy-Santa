@@ -135,7 +135,7 @@ def flappy_santa():
             if score % 3 == 0:
                 X_motion += -.20 #increasing speed of the bars
                 
-        if barX2 <= -300: #duplicated for bar 2
+        if barX2 <= -100: #duplicated for bar 2
             barX2 = 933
             height2 = random.randint(50, 375)
             
