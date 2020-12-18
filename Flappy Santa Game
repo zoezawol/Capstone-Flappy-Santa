@@ -127,8 +127,8 @@ def flappy_santa():
             barX2 += X_motion
             
          # if santa gets past an obstacle, each obstacle passed is added to the score
-        if barX1 <= -300: #-300 indicates that the bar continues to move beyond the screen instead of disappearing right at x=0, this creates a smoother transition
-            barX1 = 933
+        if barX1 <= -100: #-100 indicates the position (past santa) that the bar reaches to count the score
+            barX1 = 933   #it also indicates where the bar "starts over" instead of disappearing right at x=0, creating a smoother transition
             height1 = random.randint(50, 375)
             
             score += 1 #updating the score when santa passes through bars
